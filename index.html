@@ -689,6 +689,7 @@
     border-radius: 2px;
     padding: 24px 20px;
     position: relative;
+    margin-bottom: 24px;
   }
   .memo-wrap::before, .memo-wrap::after {
     content: '';
@@ -747,6 +748,130 @@
     border-color: var(--gold);
   }
   .copy-btn svg { width: 12px; height: 12px; }
+
+  /* ---------- Memo Extras ---------- */
+  .extras-section {
+    margin-top: 8px;
+  }
+  .extras-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .extras-head-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .extras-head-label .eyebrow {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+  }
+  .extras-head-label .jp {
+    font-family: var(--jp-serif);
+    font-size: 13px;
+    color: var(--text-muted);
+    letter-spacing: 0.15em;
+  }
+  .extras-clear {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-family: var(--jp-serif);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    padding: 6px 10px;
+    border-radius: 2px;
+    cursor: pointer;
+  }
+  .extras-clear:active { color: var(--danger); border-color: rgba(184, 90, 90, 0.3); }
+  .extras-clear:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .extras-input-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .extras-input-row input {
+    flex: 1;
+    padding: 12px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 2px;
+    color: var(--text);
+    font-family: var(--jp-serif);
+    font-size: 15px;
+    letter-spacing: 0.05em;
+  }
+  .extras-input-row input::placeholder { color: var(--text-dim); font-weight: 300; }
+  .extras-input-row input:focus { outline: none; border-color: var(--gold); }
+  .extras-add {
+    flex-shrink: 0;
+    width: 48px;
+    background: var(--gold-soft);
+    border: 1px solid var(--border-strong);
+    color: var(--gold);
+    border-radius: 2px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .2s;
+  }
+  .extras-add:active { background: var(--gold); color: #0b0908; }
+  .extras-add:disabled { opacity: 0.3; cursor: not-allowed; }
+  .extras-add svg { width: 18px; height: 18px; }
+
+  .extras-list { display: flex; flex-direction: column; gap: 6px; }
+  .extra-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--gold);
+    border-radius: 2px;
+  }
+  .extra-item .name {
+    flex: 1;
+    font-family: var(--jp-serif);
+    font-size: 14px;
+    color: var(--text);
+    letter-spacing: 0.05em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .extra-item .remove {
+    width: 28px; height: 28px;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 2px;
+  }
+  .extra-item .remove:active { color: var(--danger); background: rgba(184, 90, 90, 0.08); }
+  .extra-item .remove svg { width: 14px; height: 14px; }
+  .extras-empty {
+    text-align: center;
+    padding: 16px;
+    font-family: var(--jp-serif);
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    border: 1px dashed var(--border);
+    border-radius: 2px;
+  }
 
   /* ---------- Toast ---------- */
   .toast {
@@ -914,6 +1039,24 @@
       </button>
     </div>
     <div class="memo-wrap"><div class="memo-text" id="memoText">—</div></div>
+
+    <div class="extras-section">
+      <div class="extras-head">
+        <div class="extras-head-label">
+          <span class="eyebrow">Extra</span>
+          <span class="jp">追加の品物</span>
+        </div>
+        <button class="extras-clear" id="extrasClear" disabled>全てクリア</button>
+      </div>
+      <div class="extras-input-row">
+        <input type="text" id="extrasInput" placeholder="例：パプリカ　／　にんにく" autocomplete="off" />
+        <button class="extras-add" id="extrasAddBtn" aria-label="追加">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </div>
+      <div class="extras-list" id="extrasList"></div>
+    </div>
+
     <div class="modal-actions">
       <button class="btn-cancel" id="closeMemo">閉じる</button>
     </div>
@@ -937,12 +1080,14 @@
 
   const state = {
     items: [],
+    extras: [],
     tab: 'all',
     editingId: null,
     tempPhoto: null,       // Data URL for preview
     tempPhotoBlob: null,   // Blob for upload
     photoChanged: false,
     saving: false,
+    memoOpen: false,
   };
 
   let sb = null;
@@ -1050,6 +1195,47 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     setSync('synced');
   }
 
+  // ---------- Memo Extras ----------
+  async function fetchExtras() {
+    const { data, error } = await sb
+      .from('memo_extras')
+      .select('*')
+      .order('created_at', { ascending: true });
+    if (error) { toast('追加品の読み込みエラー'); return; }
+    state.extras = data || [];
+    renderExtras();
+    updateMemoButton();
+    if (state.memoOpen) refreshMemoText();
+  }
+
+  async function addExtra(name) {
+    name = name.trim();
+    if (!name) return;
+    setSync('syncing');
+    const { error } = await sb.from('memo_extras').insert({ name });
+    if (error) { setSync('offline'); toast('追加エラー: ' + error.message); return; }
+    setSync('synced');
+    await fetchExtras();
+  }
+
+  async function deleteExtra(id) {
+    setSync('syncing');
+    const { error } = await sb.from('memo_extras').delete().eq('id', id);
+    if (error) { setSync('offline'); toast('削除エラー'); return; }
+    setSync('synced');
+    await fetchExtras();
+  }
+
+  async function clearAllExtras() {
+    if (state.extras.length === 0) return;
+    if (!confirm('追加の品物をすべてクリアしますか？')) return;
+    setSync('syncing');
+    const { error } = await sb.from('memo_extras').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    if (error) { setSync('offline'); toast('クリアエラー'); return; }
+    setSync('synced');
+    await fetchExtras();
+  }
+
   // ---------- Photo ----------
   async function uploadPhoto(blob) {
     const filename = `${Date.now()}_${Math.random().toString(36).slice(2,10)}.jpg`;
@@ -1118,10 +1304,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     $('tabUncheckedCount').textContent = pad2(uncheckedN);
     $('tabCheckedCount').textContent = pad2(checkedN);
 
-    $('memoBtn').disabled = checkedN === 0;
-    $('memoBtn').innerHTML = checkedN > 0
-      ? `<span>メモにまとめる</span><span class="btn-count">(${checkedN})</span>`
-      : '<span>メモにまとめる</span>';
+    updateMemoButton();
 
     document.querySelectorAll('.tab').forEach(t => {
       t.classList.toggle('active', t.dataset.tab === state.tab);
@@ -1314,29 +1497,105 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
   }
 
   // ---------- Memo ----------
-  function openMemo() {
-    const checked = state.items.filter(i => i.checked);
-    if (checked.length === 0) return;
-    const lines = checked.map((it, idx) => {
-      const n = pad2(idx + 1);
-      return `${n}.  ${it.name}${it.meta ? '　（' + it.meta + '）' : ''}`;
+  function updateMemoButton() {
+    const checkedN = state.items.filter(i => i.checked).length;
+    const extrasN = state.extras.length;
+    const totalN = checkedN + extrasN;
+    const btn = $('memoBtn');
+    btn.disabled = totalN === 0;
+    btn.innerHTML = totalN > 0
+      ? `<span>メモにまとめる</span><span class="btn-count">(${totalN})</span>`
+      : '<span>メモにまとめる</span>';
+  }
+
+  function renderExtras() {
+    const list = $('extrasList');
+    const clearBtn = $('extrasClear');
+    clearBtn.disabled = state.extras.length === 0;
+    list.innerHTML = '';
+    if (state.extras.length === 0) {
+      list.innerHTML = `<div class="extras-empty">まだありません</div>`;
+      return;
+    }
+    state.extras.forEach(ex => {
+      const el = document.createElement('div');
+      el.className = 'extra-item';
+      el.innerHTML = `
+        <div class="name">${escapeHtml(ex.name)}</div>
+        <button class="remove" aria-label="削除">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      `;
+      el.querySelector('.remove').addEventListener('click', () => deleteExtra(ex.id));
+      list.appendChild(el);
     });
+  }
+
+  function buildMemoText() {
+    const checked = state.items.filter(i => i.checked);
+    const extras = state.extras;
+    const total = checked.length + extras.length;
     const now = new Date();
     const dateStr = `${now.getFullYear()}.${pad2(now.getMonth()+1)}.${pad2(now.getDate())}`;
-    const memo =
-      `─ CAFE TOLAND ─\n` +
-      `Shopping Memo\n` +
-      `${dateStr}\n` +
-      `────────────\n\n` +
-      lines.join('\n') +
-      `\n\n────────────\n` +
-      `合計  ${checked.length}  品目`;
-    $('memoText').textContent = memo;
-    $('memoCount').textContent = `${pad2(checked.length)} items`;
+
+    let body = '';
+    let idx = 0;
+    if (checked.length > 0) {
+      body += checked.map(it => {
+        idx += 1;
+        return `${pad2(idx)}.  ${it.name}${it.meta ? '　（' + it.meta + '）' : ''}`;
+      }).join('\n');
+    }
+    if (extras.length > 0) {
+      if (body) body += '\n\n── 追加の品物 ──\n';
+      else body += '── 追加の品物 ──\n';
+      body += extras.map(ex => {
+        idx += 1;
+        return `${pad2(idx)}.  ${ex.name}`;
+      }).join('\n');
+    }
+    if (!body) body = '（品目がまだありません）';
+
+    return {
+      total,
+      text:
+        `─ CAFE TOLAND ─\n` +
+        `Shopping Memo\n` +
+        `${dateStr}\n` +
+        `────────────\n\n` +
+        body +
+        `\n\n────────────\n` +
+        `合計  ${total}  品目`,
+    };
+  }
+
+  function refreshMemoText() {
+    const { total, text } = buildMemoText();
+    $('memoText').textContent = text;
+    $('memoCount').textContent = `${pad2(total)} items`;
+  }
+
+  function openMemo() {
+    const totalN = state.items.filter(i => i.checked).length + state.extras.length;
+    if (totalN === 0) return;
+    state.memoOpen = true;
+    refreshMemoText();
+    renderExtras();
     $('memoModal').classList.add('open');
   }
 
-  function closeMemo() { $('memoModal').classList.remove('open'); }
+  function closeMemo() {
+    state.memoOpen = false;
+    $('memoModal').classList.remove('open');
+  }
+
+  async function submitExtra() {
+    const input = $('extrasInput');
+    const name = input.value.trim();
+    if (!name) return;
+    input.value = '';
+    await addExtra(name);
+  }
 
   async function copyMemo() {
     const text = $('memoText').textContent;
@@ -1380,22 +1639,33 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     $('closeMemo').addEventListener('click', closeMemo);
     $('copyMemo').addEventListener('click', copyMemo);
     $('itemPhotoInput').addEventListener('change', (e) => handlePhotoSelect(e.target.files[0]));
+    $('extrasAddBtn').addEventListener('click', submitExtra);
+    $('extrasInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submitExtra(); } });
+    $('extrasClear').addEventListener('click', clearAllExtras);
     document.querySelectorAll('.tab').forEach(t => {
       t.addEventListener('click', () => { state.tab = t.dataset.tab; render(); });
     });
     [$('itemModal'), $('memoModal')].forEach(m => {
-      m.addEventListener('click', (e) => { if (e.target === m) m.classList.remove('open'); });
+      m.addEventListener('click', (e) => {
+        if (e.target === m) {
+          if (m.id === 'memoModal') closeMemo();
+          else m.classList.remove('open');
+        }
+      });
     });
-    window.addEventListener('focus', () => fetchItems());
+    window.addEventListener('focus', () => { fetchItems(); fetchExtras(); });
 
     // Initial load with loader
     list.innerHTML = '<div class="loader"><div class="spinner"></div>LOADING</div>';
-    await fetchItems();
+    await Promise.all([fetchItems(), fetchExtras()]);
 
     // Realtime subscription
     sb.channel('shopping_items_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'shopping_items' }, () => {
         fetchItems();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'memo_extras' }, () => {
+        fetchExtras();
       })
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') setSync('synced');
