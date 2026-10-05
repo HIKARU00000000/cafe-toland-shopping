@@ -73,6 +73,38 @@ create policy "anon_full_access_memo_extras"
 alter publication supabase_realtime add table public.memo_extras;
 
 -- =====================================================
+-- 店舗（カテゴリ）テーブル
+-- 業務スーパー、カインズなど、買い出し先ごとに商品を分類
+-- =====================================================
+
+create table if not exists public.stores (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  sort_order bigint not null default 0,
+  created_at timestamp with time zone not null default now()
+);
+
+create index if not exists stores_sort_idx on public.stores (sort_order, created_at);
+
+alter table public.stores enable row level security;
+
+drop policy if exists "anon_full_access_stores" on public.stores;
+create policy "anon_full_access_stores"
+  on public.stores
+  for all
+  to anon
+  using (true)
+  with check (true);
+
+alter publication supabase_realtime add table public.stores;
+
+alter table public.shopping_items
+  add column if not exists store_id uuid references public.stores(id) on delete set null;
+
+create index if not exists shopping_items_store_idx
+  on public.shopping_items (store_id);
+
+-- =====================================================
 -- Storage バケット（商品写真用）
 -- 以下は Supabase ダッシュボードから手動で作成してください：
 --   1. Storage → New bucket

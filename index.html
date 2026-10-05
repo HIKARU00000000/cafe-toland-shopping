@@ -263,6 +263,77 @@
     text-transform: uppercase;
   }
 
+  /* ---------- Store Chips ---------- */
+  .store-chips {
+    display: flex;
+    gap: 8px;
+    padding: 0 20px 24px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .store-chips::-webkit-scrollbar { display: none; }
+  .store-chip {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-family: var(--jp-serif);
+    font-size: 13px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all .2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .store-chip:active { background: var(--surface); }
+  .store-chip.active {
+    background: var(--gold);
+    color: #0b0908;
+    border-color: var(--gold);
+    font-weight: 500;
+  }
+  .store-chip .chip-count {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 11px;
+    opacity: 0.75;
+  }
+  .store-chip.manage {
+    color: var(--gold);
+    border-color: var(--border-strong);
+    border-style: dashed;
+  }
+  .store-chip.manage:active { background: var(--gold-soft); }
+  .store-chip svg { width: 14px; height: 14px; }
+
+  /* ---------- Store Group ---------- */
+  .store-group { margin-bottom: 24px; }
+  .store-group-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 24px 14px;
+  }
+  .store-group-head .line { flex: 1; height: 1px; background: var(--hairline); }
+  .store-group-head .name {
+    font-family: var(--jp-serif);
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--gold);
+    letter-spacing: 0.18em;
+  }
+  .store-group-head .count {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
   /* ---------- Item ---------- */
   .items { padding: 0 16px; }
   .item {
@@ -596,6 +667,84 @@
   }
   .field input[type="text"]::placeholder { color: var(--text-dim); font-weight: 300; }
   .field input[type="text"]:focus { outline: none; border-bottom-color: var(--gold); }
+
+  /* Store selector in item modal */
+  .store-selector {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .store-opt {
+    padding: 8px 14px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-family: var(--jp-serif);
+    font-size: 13px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .store-opt:active { background: var(--surface); }
+  .store-opt.selected {
+    background: var(--gold);
+    color: #0b0908;
+    border-color: var(--gold);
+    font-weight: 500;
+  }
+  .store-opt.add {
+    border-style: dashed;
+    color: var(--gold);
+  }
+
+  /* Stores manage list */
+  .stores-list { display: flex; flex-direction: column; gap: 6px; margin-top: 16px; }
+  .store-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--gold);
+    border-radius: 2px;
+  }
+  .store-row .store-name {
+    flex: 1;
+    font-family: var(--jp-serif);
+    font-size: 14px;
+    color: var(--text);
+    letter-spacing: 0.05em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .store-row input.rename {
+    flex: 1;
+    padding: 6px 10px;
+    background: var(--bg-2);
+    border: 1px solid var(--gold);
+    border-radius: 2px;
+    color: var(--text);
+    font-family: var(--jp-serif);
+    font-size: 14px;
+  }
+  .store-row input.rename:focus { outline: none; }
+  .store-row .icon-btn {
+    width: 28px; height: 28px;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 2px;
+  }
+  .store-row .icon-btn:active { color: var(--gold); background: var(--gold-soft); }
+  .store-row .icon-btn.delete:active { color: var(--danger); background: rgba(184, 90, 90, 0.08); }
+  .store-row .icon-btn svg { width: 14px; height: 14px; }
 
   .photo-picker {
     display: flex;
@@ -971,13 +1120,15 @@
   </div>
 </div>
 
+<div class="store-chips" id="storeChips"></div>
+
 <div class="section-head">
   <div class="line"></div>
   <div class="label" id="sectionLabel">Items</div>
   <div class="line"></div>
 </div>
 
-<div class="items" id="itemList"></div>
+<div id="itemList"></div>
 
 <div class="bottom-bar">
   <button class="btn btn-icon" id="addBtn" aria-label="商品を追加">
@@ -996,6 +1147,11 @@
     <div class="field">
       <label>商品名<span class="req">*</span></label>
       <input type="text" id="itemName" placeholder="例：有機牛乳" autocomplete="off" />
+    </div>
+
+    <div class="field">
+      <label>店舗</label>
+      <div class="store-selector" id="storeSelector"></div>
     </div>
 
     <div class="field">
@@ -1021,6 +1177,31 @@
       <button class="btn-cancel" id="cancelItem">キャンセル</button>
       <button class="btn-delete" id="deleteItem" style="display:none">削除</button>
       <button class="btn-save" id="saveItem">保存する</button>
+    </div>
+  </div>
+</div>
+
+<!-- Store Management Modal -->
+<div class="modal-backdrop" id="storeModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-eyebrow">Stores</div>
+    <div class="modal-title">店舗を管理</div>
+
+    <div class="field">
+      <label>新しい店舗を追加</label>
+      <div class="extras-input-row">
+        <input type="text" id="storeNameInput" placeholder="例：業務スーパー" autocomplete="off" />
+        <button class="extras-add" id="storeAddBtn" aria-label="追加">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="stores-list" id="storesList"></div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" id="closeStoreModal">閉じる</button>
     </div>
   </div>
 </div>
@@ -1081,13 +1262,17 @@
   const state = {
     items: [],
     extras: [],
+    stores: [],
     tab: 'all',
+    selectedStoreId: 'all',   // 'all' | 'none' | <uuid>
     editingId: null,
-    tempPhoto: null,       // Data URL for preview
-    tempPhotoBlob: null,   // Blob for upload
+    editingStoreId: null,     // current store in item modal
+    tempPhoto: null,
+    tempPhotoBlob: null,
     photoChanged: false,
     saving: false,
     memoOpen: false,
+    editingStoreRowId: null,  // for inline rename in store modal
   };
 
   let sb = null;
@@ -1142,7 +1327,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     render();
   }
 
-  async function createItem({ name, meta, photoBlob }) {
+  async function createItem({ name, meta, photoBlob, storeId }) {
     let photoUrl = null;
     if (photoBlob) {
       photoUrl = await uploadPhoto(photoBlob);
@@ -1154,6 +1339,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     setSync('syncing');
     const { error } = await sb.from('shopping_items').insert({
       name, meta, photo: photoUrl, checked: false, sort_order,
+      store_id: storeId || null,
     });
     if (error) { setSync('offline'); toast('追加エラー: ' + error.message); return false; }
     setSync('synced');
@@ -1193,6 +1379,189 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     const { error } = await sb.from('shopping_items').update({ checked: newChecked }).eq('id', id);
     if (error) { it.checked = !newChecked; render(); setSync('offline'); toast('同期エラー'); return; }
     setSync('synced');
+  }
+
+  // ---------- Stores ----------
+  async function fetchStores() {
+    const { data, error } = await sb
+      .from('stores')
+      .select('*')
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: true });
+    if (error) { toast('店舗の読み込みエラー'); return; }
+    state.stores = data || [];
+    renderStoreChips();
+    renderStoresList();
+    renderStoreSelector();
+    render();
+  }
+
+  async function createStore(name) {
+    name = name.trim();
+    if (!name) return null;
+    const sort_order = state.stores.length > 0
+      ? Math.max(...state.stores.map(s => s.sort_order || 0)) + 1 : 0;
+    setSync('syncing');
+    const { data, error } = await sb
+      .from('stores')
+      .insert({ name, sort_order })
+      .select().single();
+    if (error) { setSync('offline'); toast('追加エラー: ' + error.message); return null; }
+    setSync('synced');
+    await fetchStores();
+    return data;
+  }
+
+  async function updateStore(id, name) {
+    name = name.trim();
+    if (!name) return;
+    setSync('syncing');
+    const { error } = await sb.from('stores').update({ name }).eq('id', id);
+    if (error) { setSync('offline'); toast('更新エラー'); return; }
+    setSync('synced');
+    await fetchStores();
+  }
+
+  async function deleteStoreRow(id) {
+    const s = state.stores.find(x => x.id === id);
+    if (!s) return;
+    const linked = state.items.filter(i => i.store_id === id).length;
+    const msg = linked > 0
+      ? `「${s.name}」を削除しますか？\n（この店舗の商品 ${linked} 件は「未分類」になります）`
+      : `「${s.name}」を削除しますか？`;
+    if (!confirm(msg)) return;
+    setSync('syncing');
+    const { error } = await sb.from('stores').delete().eq('id', id);
+    if (error) { setSync('offline'); toast('削除エラー'); return; }
+    setSync('synced');
+    if (state.selectedStoreId === id) state.selectedStoreId = 'all';
+    await fetchStores();
+    await fetchItems();
+  }
+
+  function renderStoreChips() {
+    const el = $('storeChips');
+    if (!el) return;
+    el.innerHTML = '';
+    const chips = [
+      { id: 'all', name: 'すべて', count: state.items.length },
+      ...state.stores.map(s => ({
+        id: s.id, name: s.name,
+        count: state.items.filter(i => i.store_id === s.id).length,
+      })),
+      { id: 'none', name: '未分類', count: state.items.filter(i => !i.store_id).length },
+    ];
+    chips.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'store-chip' + (state.selectedStoreId === c.id ? ' active' : '');
+      btn.innerHTML = `${escapeHtml(c.name)}<span class="chip-count">${pad2(c.count)}</span>`;
+      btn.addEventListener('click', () => { state.selectedStoreId = c.id; renderStoreChips(); render(); });
+      el.appendChild(btn);
+    });
+    const manage = document.createElement('button');
+    manage.className = 'store-chip manage';
+    manage.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>店舗管理`;
+    manage.addEventListener('click', openStoreModal);
+    el.appendChild(manage);
+  }
+
+  function renderStoresList() {
+    const el = $('storesList');
+    if (!el) return;
+    el.innerHTML = '';
+    if (state.stores.length === 0) {
+      el.innerHTML = `<div class="extras-empty">まだ店舗がありません</div>`;
+      return;
+    }
+    state.stores.forEach(s => {
+      const row = document.createElement('div');
+      row.className = 'store-row';
+      if (state.editingStoreRowId === s.id) {
+        row.innerHTML = `
+          <input type="text" class="rename" value="${escapeHtml(s.name)}" />
+          <button class="icon-btn save" aria-label="保存">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+          <button class="icon-btn cancel" aria-label="キャンセル">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        `;
+        const input = row.querySelector('input.rename');
+        setTimeout(() => { input.focus(); input.select(); }, 50);
+        row.querySelector('.save').addEventListener('click', async () => {
+          const v = input.value.trim();
+          if (v) { await updateStore(s.id, v); state.editingStoreRowId = null; }
+          else { state.editingStoreRowId = null; renderStoresList(); }
+        });
+        row.querySelector('.cancel').addEventListener('click', () => { state.editingStoreRowId = null; renderStoresList(); });
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') { row.querySelector('.save').click(); }
+          if (e.key === 'Escape') { row.querySelector('.cancel').click(); }
+        });
+      } else {
+        row.innerHTML = `
+          <div class="store-name">${escapeHtml(s.name)}</div>
+          <button class="icon-btn edit" aria-label="編集">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="icon-btn delete" aria-label="削除">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          </button>
+        `;
+        row.querySelector('.edit').addEventListener('click', () => { state.editingStoreRowId = s.id; renderStoresList(); });
+        row.querySelector('.delete').addEventListener('click', () => deleteStoreRow(s.id));
+      }
+      el.appendChild(row);
+    });
+  }
+
+  function renderStoreSelector() {
+    const el = $('storeSelector');
+    if (!el) return;
+    el.innerHTML = '';
+    const makeOpt = (id, name, cls = '') => {
+      const b = document.createElement('button');
+      b.className = 'store-opt' + (cls ? ' ' + cls : '') + (state.editingStoreId === id ? ' selected' : '');
+      b.textContent = name;
+      b.addEventListener('click', () => { state.editingStoreId = id; renderStoreSelector(); });
+      return b;
+    };
+    el.appendChild(makeOpt(null, '指定なし'));
+    state.stores.forEach(s => el.appendChild(makeOpt(s.id, s.name)));
+    const add = document.createElement('button');
+    add.className = 'store-opt add';
+    add.textContent = '＋ 新規店舗';
+    add.addEventListener('click', async () => {
+      const name = prompt('店舗名を入力してください');
+      if (!name || !name.trim()) return;
+      const created = await createStore(name.trim());
+      if (created) state.editingStoreId = created.id;
+      renderStoreSelector();
+    });
+    el.appendChild(add);
+  }
+
+  function openStoreModal() {
+    renderStoresList();
+    $('storeNameInput').value = '';
+    $('storeModal').classList.add('open');
+    setTimeout(() => $('storeNameInput').focus(), 150);
+  }
+
+  function closeStoreModal() { $('storeModal').classList.remove('open'); state.editingStoreRowId = null; }
+
+  async function submitNewStore() {
+    const input = $('storeNameInput');
+    const name = input.value.trim();
+    if (!name) return;
+    input.value = '';
+    await createStore(name);
+  }
+
+  function storeName(id) {
+    if (!id) return '未分類';
+    const s = state.stores.find(x => x.id === id);
+    return s ? s.name : '未分類';
   }
 
   // ---------- Memo Extras ----------
@@ -1289,6 +1658,41 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
   const list = $('itemList');
   function pad2(n) { return String(n).padStart(2, '0'); }
 
+  function renderItemCard(item) {
+    const el = document.createElement('div');
+    el.className = 'item' + (item.checked ? ' checked' : '');
+    el.innerHTML = `
+      <div class="checkbox">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#0b0908" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="thumb" data-action="edit">
+        ${item.photo ? `<img src="${item.photo}" alt="" loading="lazy">` : `
+          <div class="placeholder">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+            </svg>
+          </div>`}
+      </div>
+      <div class="item-info" data-action="toggle">
+        <div class="item-name">${escapeHtml(item.name)}</div>
+        ${item.meta ? `<div class="item-meta">${escapeHtml(item.meta)}</div>` : ''}
+      </div>
+      <button class="item-menu" data-action="edit" aria-label="編集">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+      </button>
+    `;
+    el.querySelector('[data-action="toggle"]').addEventListener('click', () => toggleItem(item.id));
+    el.querySelector('.checkbox').addEventListener('click', (e) => { e.stopPropagation(); toggleItem(item.id); });
+    el.querySelectorAll('[data-action="edit"]').forEach(b => {
+      b.addEventListener('click', (e) => { e.stopPropagation(); openEditModal(item.id); });
+    });
+    return el;
+  }
+
   function render() {
     const now = new Date();
     const d = ['SUN','MON','TUE','WED','THU','FRI','SAT'][now.getDay()];
@@ -1314,11 +1718,15 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     if (state.tab === 'unchecked') items = items.filter(i => !i.checked);
     else if (state.tab === 'checked') items = items.filter(i => i.checked);
 
+    if (state.selectedStoreId === 'none') items = items.filter(i => !i.store_id);
+    else if (state.selectedStoreId !== 'all') items = items.filter(i => i.store_id === state.selectedStoreId);
+
     $('sectionLabel').textContent =
       state.tab === 'all' ? 'Items' :
       state.tab === 'unchecked' ? 'To Buy' : 'Completed';
 
     list.innerHTML = '';
+
     if (items.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'empty';
@@ -1343,47 +1751,55 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
           </div>
           <div class="empty-title">該当する商品はありません</div>
           <div class="empty-ornament">◆ ◆ ◆</div>
-          <div class="empty-sub">タブを切り替えてみてください</div>
+          <div class="empty-sub">タブ・店舗を切り替えてみてください</div>
         `;
       }
       list.appendChild(empty);
       return;
     }
 
-    items.forEach(item => {
-      const el = document.createElement('div');
-      el.className = 'item' + (item.checked ? ' checked' : '');
-      el.innerHTML = `
-        <div class="checkbox">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#0b0908" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        </div>
-        <div class="thumb" data-action="edit">
-          ${item.photo ? `<img src="${item.photo}" alt="" loading="lazy">` : `
-            <div class="placeholder">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-              </svg>
-            </div>`}
-        </div>
-        <div class="item-info" data-action="toggle">
-          <div class="item-name">${escapeHtml(item.name)}</div>
-          ${item.meta ? `<div class="item-meta">${escapeHtml(item.meta)}</div>` : ''}
-        </div>
-        <button class="item-menu" data-action="edit" aria-label="編集">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-          </svg>
-        </button>
-      `;
-      el.querySelector('[data-action="toggle"]').addEventListener('click', () => toggleItem(item.id));
-      el.querySelector('.checkbox').addEventListener('click', (e) => { e.stopPropagation(); toggleItem(item.id); });
-      el.querySelectorAll('[data-action="edit"]').forEach(b => {
-        b.addEventListener('click', (e) => { e.stopPropagation(); openEditModal(item.id); });
+    const grouped = state.selectedStoreId === 'all';
+    if (grouped) {
+      const buckets = new Map();
+      state.stores.forEach(s => buckets.set(s.id, []));
+      buckets.set('__none__', []);
+      items.forEach(it => {
+        const key = it.store_id || '__none__';
+        if (!buckets.has(key)) buckets.set(key, []);
+        buckets.get(key).push(it);
       });
-      list.appendChild(el);
-    });
+      state.stores.forEach(s => {
+        const arr = buckets.get(s.id) || [];
+        if (arr.length === 0) return;
+        list.appendChild(renderStoreGroup(s.name, arr));
+      });
+      const noneArr = buckets.get('__none__') || [];
+      if (noneArr.length > 0) list.appendChild(renderStoreGroup('未分類', noneArr));
+    } else {
+      const inner = document.createElement('div');
+      inner.className = 'items';
+      items.forEach(it => inner.appendChild(renderItemCard(it)));
+      list.appendChild(inner);
+    }
+  }
+
+  function renderStoreGroup(name, items) {
+    const group = document.createElement('div');
+    group.className = 'store-group';
+    const head = document.createElement('div');
+    head.className = 'store-group-head';
+    head.innerHTML = `
+      <div class="line"></div>
+      <div class="name">${escapeHtml(name)}</div>
+      <div class="count">${pad2(items.length)}</div>
+      <div class="line"></div>
+    `;
+    const inner = document.createElement('div');
+    inner.className = 'items';
+    items.forEach(it => inner.appendChild(renderItemCard(it)));
+    group.appendChild(head);
+    group.appendChild(inner);
+    return group;
   }
 
   function escapeHtml(s) {
@@ -1398,11 +1814,15 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     state.tempPhoto = null;
     state.tempPhotoBlob = null;
     state.photoChanged = false;
+    // Pre-select store from current filter
+    state.editingStoreId = (state.selectedStoreId !== 'all' && state.selectedStoreId !== 'none')
+      ? state.selectedStoreId : null;
     $('itemModalEyebrow').textContent = 'New Item';
     $('itemModalTitle').textContent = '商品を追加';
     $('itemName').value = '';
     $('itemMeta').value = '';
     resetPhotoPreview();
+    renderStoreSelector();
     $('deleteItem').style.display = 'none';
     $('itemModal').classList.add('open');
     setTimeout(() => $('itemName').focus(), 200);
@@ -1412,6 +1832,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     const it = state.items.find(i => i.id === id);
     if (!it) return;
     state.editingId = id;
+    state.editingStoreId = it.store_id || null;
     state.tempPhoto = it.photo || null;
     state.tempPhotoBlob = null;
     state.photoChanged = false;
@@ -1425,6 +1846,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     } else {
       resetPhotoPreview();
     }
+    renderStoreSelector();
     $('deleteItem').style.display = '';
     $('itemModal').classList.add('open');
   }
@@ -1455,7 +1877,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     let ok = false;
     if (state.editingId) {
       const it = state.items.find(i => i.id === state.editingId);
-      const updates = { name, meta };
+      const updates = { name, meta, store_id: state.editingStoreId || null };
       if (state.photoChanged && !state.tempPhotoBlob && !state.tempPhoto) {
         updates.photo = null;
         if (it && it.photo) deletePhoto(it.photo);
@@ -1467,7 +1889,11 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
         state.photoChanged && it ? it.photo : null,
       );
     } else {
-      ok = await createItem({ name, meta, photoBlob: state.tempPhotoBlob });
+      ok = await createItem({
+        name, meta,
+        photoBlob: state.tempPhotoBlob,
+        storeId: state.editingStoreId,
+      });
     }
 
     state.saving = false;
@@ -1540,15 +1966,27 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
 
     let body = '';
     let idx = 0;
-    if (checked.length > 0) {
-      body += checked.map(it => {
+    const sections = [];
+
+    state.stores.forEach(s => {
+      const its = checked.filter(it => it.store_id === s.id);
+      if (its.length > 0) sections.push({ name: s.name, items: its });
+    });
+    const noneItems = checked.filter(it => !it.store_id);
+    if (noneItems.length > 0) sections.push({ name: '未分類', items: noneItems });
+
+    sections.forEach((sec, i) => {
+      if (i > 0) body += '\n\n';
+      body += `【${sec.name}】\n`;
+      body += sec.items.map(it => {
         idx += 1;
         return `${pad2(idx)}.  ${it.name}${it.meta ? '　（' + it.meta + '）' : ''}`;
       }).join('\n');
-    }
+    });
+
     if (extras.length > 0) {
-      if (body) body += '\n\n── 追加の品物 ──\n';
-      else body += '── 追加の品物 ──\n';
+      if (body) body += '\n\n';
+      body += '【追加の品物】\n';
       body += extras.map(ex => {
         idx += 1;
         return `${pad2(idx)}.  ${ex.name}`;
@@ -1642,22 +2080,26 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     $('extrasAddBtn').addEventListener('click', submitExtra);
     $('extrasInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submitExtra(); } });
     $('extrasClear').addEventListener('click', clearAllExtras);
+    $('storeAddBtn').addEventListener('click', submitNewStore);
+    $('storeNameInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submitNewStore(); } });
+    $('closeStoreModal').addEventListener('click', closeStoreModal);
     document.querySelectorAll('.tab').forEach(t => {
       t.addEventListener('click', () => { state.tab = t.dataset.tab; render(); });
     });
-    [$('itemModal'), $('memoModal')].forEach(m => {
+    [$('itemModal'), $('memoModal'), $('storeModal')].forEach(m => {
       m.addEventListener('click', (e) => {
         if (e.target === m) {
           if (m.id === 'memoModal') closeMemo();
+          else if (m.id === 'storeModal') closeStoreModal();
           else m.classList.remove('open');
         }
       });
     });
-    window.addEventListener('focus', () => { fetchItems(); fetchExtras(); });
+    window.addEventListener('focus', () => { fetchItems(); fetchExtras(); fetchStores(); });
 
     // Initial load with loader
     list.innerHTML = '<div class="loader"><div class="spinner"></div>LOADING</div>';
-    await Promise.all([fetchItems(), fetchExtras()]);
+    await Promise.all([fetchStores(), fetchItems(), fetchExtras()]);
 
     // Realtime subscription
     sb.channel('shopping_items_changes')
@@ -1666,6 +2108,9 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'memo_extras' }, () => {
         fetchExtras();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'stores' }, () => {
+        fetchStores();
       })
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') setSync('synced');
