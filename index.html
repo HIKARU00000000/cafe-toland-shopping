@@ -1590,11 +1590,23 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     const it = state.items.find(i => i.id === id);
     if (!it) return;
     const newChecked = !it.checked;
+    const prevQty = it.qty || 1;
+    const updates = { checked: newChecked };
+    // チェック解除時は個数を1にリセット
+    if (!newChecked && prevQty !== 1) updates.qty = 1;
     it.checked = newChecked;
+    if (!newChecked) it.qty = 1;
     render();
     setSync('syncing');
-    const { error } = await sb.from('shopping_items').update({ checked: newChecked }).eq('id', id);
-    if (error) { it.checked = !newChecked; render(); setSync('offline'); toast('同期エラー'); return; }
+    const { error } = await sb.from('shopping_items').update(updates).eq('id', id);
+    if (error) {
+      it.checked = !newChecked;
+      it.qty = prevQty;
+      render();
+      setSync('offline');
+      toast('同期エラー');
+      return;
+    }
     setSync('synced');
   }
 
@@ -2338,17 +2350,21 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     // ホーム画面にも反映されるよう保存
     const { text } = buildMemoText();
     await saveMemoToDb(text);
-    // 選択していた商品のチェックをリセット
+    // 選択していた商品のチェックと個数をリセット
     const checkedItems = state.items.filter(i => i.checked);
     if (checkedItems.length > 0) {
-      checkedItems.forEach(it => { it.checked = false; });
+      const prev = checkedItems.map(it => ({ id: it.id, qty: it.qty }));
+      checkedItems.forEach(it => { it.checked = false; it.qty = 1; });
       render();
       const { error } = await sb
         .from('shopping_items')
-        .update({ checked: false })
+        .update({ checked: false, qty: 1 })
         .in('id', checkedItems.map(it => it.id));
       if (error) {
-        checkedItems.forEach(it => { it.checked = true; });
+        prev.forEach(p => {
+          const it = state.items.find(i => i.id === p.id);
+          if (it) { it.checked = true; it.qty = p.qty; }
+        });
         render();
         toast('リセットエラー');
       }
