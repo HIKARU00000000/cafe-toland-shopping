@@ -586,16 +586,22 @@
   .item-menu:active { color: var(--gold); border-color: var(--border); }
   .item-menu svg { width: 16px; height: 16px; }
 
-  /* Qty Stepper (item card inline) */
+  /* Qty Stepper (item card inline) — チェック時のみ表示 */
   .qty-stepper {
-    display: flex;
+    display: none;
     align-items: center;
     gap: 2px;
     flex-shrink: 0;
-    border: 1px solid var(--border);
+    border: 1px solid var(--gold-dim);
     border-radius: 999px;
     padding: 2px;
     background: var(--bg-2);
+    animation: qtyFadeIn .2s ease-out;
+  }
+  .item.checked .qty-stepper { display: flex; }
+  @keyframes qtyFadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
   }
   .qty-btn {
     width: 26px;
