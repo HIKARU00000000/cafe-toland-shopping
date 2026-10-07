@@ -1372,7 +1372,7 @@
     </div>
 
     <div class="field">
-      <label>店舗</label>
+      <label>カテゴリー</label>
       <div class="store-selector" id="storeSelector"></div>
     </div>
 
@@ -1407,11 +1407,11 @@
 <div class="modal-backdrop" id="storeModal">
   <div class="modal">
     <div class="modal-handle"></div>
-    <div class="modal-eyebrow">Stores</div>
-    <div class="modal-title">店舗を管理</div>
+    <div class="modal-eyebrow">Categories</div>
+    <div class="modal-title">カテゴリーを管理</div>
 
     <div class="field">
-      <label>新しい店舗を追加</label>
+      <label>新しいカテゴリーを追加</label>
       <div class="extras-input-row">
         <input type="text" id="storeNameInput" placeholder="例：業務スーパー" autocomplete="off" />
         <button class="extras-add" id="storeAddBtn" aria-label="追加">
@@ -1686,7 +1686,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
       .select('*')
       .order('sort_order', { ascending: true })
       .order('created_at', { ascending: true });
-    if (error) { toast('店舗の読み込みエラー'); return; }
+    if (error) { toast('カテゴリーの読み込みエラー'); return; }
     state.stores = data || [];
     renderStoreChips();
     renderStoresList();
@@ -1725,7 +1725,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     if (!s) return;
     const linked = state.items.filter(i => i.store_id === id).length;
     const msg = linked > 0
-      ? `「${s.name}」を削除しますか？\n（この店舗の商品 ${linked} 件は「未分類」になります）`
+      ? `「${s.name}」を削除しますか？\n（このカテゴリーの商品 ${linked} 件は「未分類」になります）`
       : `「${s.name}」を削除しますか？`;
     if (!confirm(msg)) return;
     setSync('syncing');
@@ -1759,7 +1759,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     });
     const manage = document.createElement('button');
     manage.className = 'store-chip manage';
-    manage.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>店舗管理`;
+    manage.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>カテゴリー追加`;
     manage.addEventListener('click', openStoreModal);
     el.appendChild(manage);
 
@@ -1783,7 +1783,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     if (!el) return;
     el.innerHTML = '';
     if (state.stores.length === 0) {
-      el.innerHTML = `<div class="extras-empty">まだ店舗がありません</div>`;
+      el.innerHTML = `<div class="extras-empty">まだカテゴリーがありません</div>`;
       return;
     }
     state.stores.forEach(s => {
@@ -1843,9 +1843,9 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     state.stores.forEach(s => el.appendChild(makeOpt(s.id, s.name)));
     const add = document.createElement('button');
     add.className = 'store-opt add';
-    add.textContent = '＋ 新規店舗';
+    add.textContent = '＋ 新規カテゴリー';
     add.addEventListener('click', async () => {
-      const name = prompt('店舗名を入力してください');
+      const name = prompt('カテゴリー名を入力してください');
       if (!name || !name.trim()) return;
       const created = await createStore(name.trim());
       if (created) state.editingStoreId = created.id;
@@ -2066,7 +2066,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
           </div>
           <div class="empty-title">該当する商品はありません</div>
           <div class="empty-ornament">◆ ◆ ◆</div>
-          <div class="empty-sub">タブ・店舗を切り替えてみてください</div>
+          <div class="empty-sub">カテゴリーを切り替えてみてください</div>
         `;
       }
       list.appendChild(empty);
