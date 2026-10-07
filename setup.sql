@@ -10,6 +10,7 @@ create table if not exists public.shopping_items (
   meta text,
   photo text,
   checked boolean not null default false,
+  qty integer not null default 1 check (qty >= 1),
   sort_order bigint not null default 0,
   created_at timestamp with time zone not null default now(),
   updated_at timestamp with time zone not null default now()
