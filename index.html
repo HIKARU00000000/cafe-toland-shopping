@@ -2341,6 +2341,21 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     // ホーム画面にも反映されるよう保存
     const { text } = buildMemoText();
     await saveMemoToDb(text);
+    // 選択していた商品のチェックをリセット
+    const checkedItems = state.items.filter(i => i.checked);
+    if (checkedItems.length > 0) {
+      checkedItems.forEach(it => { it.checked = false; });
+      render();
+      const { error } = await sb
+        .from('shopping_items')
+        .update({ checked: false })
+        .in('id', checkedItems.map(it => it.id));
+      if (error) {
+        checkedItems.forEach(it => { it.checked = true; });
+        render();
+        toast('リセットエラー');
+      }
+    }
   }
 
   function closeMemo() {
