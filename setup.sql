@@ -105,6 +105,28 @@ create index if not exists shopping_items_store_idx
   on public.shopping_items (store_id);
 
 -- =====================================================
+-- 保存メモ（ホーム画面に残しておく買い物メモ、常に1件）
+-- =====================================================
+
+create table if not exists public.saved_memo (
+  id uuid primary key default gen_random_uuid(),
+  text text not null,
+  created_at timestamp with time zone not null default now()
+);
+
+alter table public.saved_memo enable row level security;
+
+drop policy if exists "anon_full_access_saved_memo" on public.saved_memo;
+create policy "anon_full_access_saved_memo"
+  on public.saved_memo
+  for all
+  to anon
+  using (true)
+  with check (true);
+
+alter publication supabase_realtime add table public.saved_memo;
+
+-- =====================================================
 -- Storage バケット（商品写真用）
 -- 以下は Supabase ダッシュボードから手動で作成してください：
 --   1. Storage → New bucket

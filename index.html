@@ -268,6 +268,88 @@
     text-transform: uppercase;
   }
 
+  /* ---------- Saved Memo (ホーム画面に残るメモ) ---------- */
+  .saved-memo {
+    margin: 0 24px 32px;
+    padding: 24px 20px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 2px;
+    position: relative;
+  }
+  .saved-memo::before, .saved-memo::after {
+    content: '';
+    position: absolute;
+    width: 16px; height: 16px;
+    border: 1px solid var(--gold);
+    opacity: 0.5;
+  }
+  .saved-memo::before { top: 6px; left: 6px; border-right: none; border-bottom: none; }
+  .saved-memo::after { bottom: 6px; right: 6px; border-left: none; border-top: none; }
+
+  .saved-memo-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .saved-memo-head-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .saved-memo-eyebrow {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+  }
+  .saved-memo-time {
+    font-family: var(--serif);
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+  }
+  .saved-memo-actions { display: flex; gap: 8px; }
+  .saved-memo-btn {
+    padding: 7px 12px;
+    background: transparent;
+    border: 1px solid var(--border-strong);
+    border-radius: 2px;
+    color: var(--text-muted);
+    font-family: var(--jp-serif);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all .2s;
+  }
+  .saved-memo-btn svg { width: 12px; height: 12px; }
+  .saved-memo-btn.copy:active, .saved-memo-btn.copy.copied {
+    background: var(--gold);
+    color: #0b0908;
+    border-color: var(--gold);
+  }
+  .saved-memo-btn.delete { color: var(--danger); border-color: rgba(184, 90, 90, 0.3); }
+  .saved-memo-btn.delete:active { background: rgba(184, 90, 90, 0.1); }
+
+  .saved-memo-text {
+    font-family: var(--jp-serif);
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 2;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+    letter-spacing: 0.08em;
+    max-height: 420px;
+    overflow-y: auto;
+  }
+
   /* ---------- Store Chips ---------- */
   .store-chips {
     display: flex;
@@ -1140,6 +1222,26 @@
   </div>
 </div>
 
+<div class="saved-memo" id="savedMemo" style="display:none">
+  <div class="saved-memo-head">
+    <div class="saved-memo-head-left">
+      <div class="saved-memo-eyebrow">Current Memo</div>
+      <div class="saved-memo-time" id="savedMemoTime">—</div>
+    </div>
+    <div class="saved-memo-actions">
+      <button class="saved-memo-btn copy" id="savedMemoCopy">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="1"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        COPY
+      </button>
+      <button class="saved-memo-btn delete" id="savedMemoDelete">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        削除
+      </button>
+    </div>
+  </div>
+  <div class="saved-memo-text" id="savedMemoText">—</div>
+</div>
+
 <div class="store-chips" id="storeChips"></div>
 
 <div class="section-head">
@@ -1283,16 +1385,17 @@
     items: [],
     extras: [],
     stores: [],
+    savedMemo: null,          // { id, text, created_at } or null
     tab: 'all',
     selectedStoreId: 'all',   // 'all' | 'none' | <uuid>
     editingId: null,
-    editingStoreId: null,     // current store in item modal
+    editingStoreId: null,
     tempPhoto: null,
     tempPhotoBlob: null,
     photoChanged: false,
     saving: false,
     memoOpen: false,
-    editingStoreRowId: null,  // for inline rename in store modal
+    editingStoreRowId: null,
   };
 
   let sb = null;
@@ -1399,6 +1502,66 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     const { error } = await sb.from('shopping_items').update({ checked: newChecked }).eq('id', id);
     if (error) { it.checked = !newChecked; render(); setSync('offline'); toast('同期エラー'); return; }
     setSync('synced');
+  }
+
+  // ---------- Saved Memo ----------
+  async function fetchSavedMemo() {
+    const { data, error } = await sb
+      .from('saved_memo')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(1);
+    if (error) { toast('メモ読み込みエラー'); return; }
+    state.savedMemo = (data && data[0]) || null;
+    renderSavedMemo();
+  }
+
+  async function saveMemoToDb(text) {
+    setSync('syncing');
+    // 常に1件のみ保持するため、既存を全削除してから挿入
+    const { error: delErr } = await sb.from('saved_memo').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    if (delErr) { setSync('offline'); toast('保存前クリアエラー'); return false; }
+    const { error } = await sb.from('saved_memo').insert({ text });
+    if (error) { setSync('offline'); toast('メモ保存エラー: ' + error.message); return false; }
+    setSync('synced');
+    await fetchSavedMemo();
+    return true;
+  }
+
+  async function deleteSavedMemo() {
+    if (!state.savedMemo) return;
+    if (!confirm('ホーム画面のメモを削除しますか？')) return;
+    setSync('syncing');
+    const { error } = await sb.from('saved_memo').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    if (error) { setSync('offline'); toast('削除エラー'); return; }
+    setSync('synced');
+    await fetchSavedMemo();
+    toast('メモを削除しました');
+  }
+
+  function renderSavedMemo() {
+    const wrap = $('savedMemo');
+    if (!state.savedMemo) { wrap.style.display = 'none'; return; }
+    wrap.style.display = '';
+    $('savedMemoText').textContent = state.savedMemo.text;
+    const d = new Date(state.savedMemo.created_at);
+    const dateStr = `${d.getFullYear()}.${pad2(d.getMonth()+1)}.${pad2(d.getDate())}  ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+    $('savedMemoTime').textContent = dateStr + ' 作成';
+  }
+
+  async function copySavedMemo() {
+    if (!state.savedMemo) return;
+    try {
+      await navigator.clipboard.writeText(state.savedMemo.text);
+      const btn = $('savedMemoCopy');
+      btn.classList.add('copied');
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>COPIED';
+      toast('メモをコピーしました');
+      setTimeout(() => {
+        btn.classList.remove('copied');
+        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="1"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>COPY';
+      }, 2000);
+    } catch (e) { toast('コピーに失敗しました'); }
   }
 
   // ---------- Stores ----------
@@ -2035,13 +2198,16 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     $('memoCount').textContent = `${pad2(total)} items`;
   }
 
-  function openMemo() {
+  async function openMemo() {
     const totalN = state.items.filter(i => i.checked).length + state.extras.length;
     if (totalN === 0) return;
     state.memoOpen = true;
     refreshMemoText();
     renderExtras();
     $('memoModal').classList.add('open');
+    // ホーム画面にも反映されるよう保存
+    const { text } = buildMemoText();
+    await saveMemoToDb(text);
   }
 
   function closeMemo() {
@@ -2105,6 +2271,8 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     $('storeAddBtn').addEventListener('click', submitNewStore);
     $('storeNameInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submitNewStore(); } });
     $('closeStoreModal').addEventListener('click', closeStoreModal);
+    $('savedMemoCopy').addEventListener('click', copySavedMemo);
+    $('savedMemoDelete').addEventListener('click', deleteSavedMemo);
     document.querySelectorAll('.tab').forEach(t => {
       t.addEventListener('click', () => { state.tab = t.dataset.tab; render(); });
     });
@@ -2117,11 +2285,11 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
         }
       });
     });
-    window.addEventListener('focus', () => { fetchItems(); fetchExtras(); fetchStores(); });
+    window.addEventListener('focus', () => { fetchItems(); fetchExtras(); fetchStores(); fetchSavedMemo(); });
 
     // Initial load with loader
     list.innerHTML = '<div class="loader"><div class="spinner"></div>LOADING</div>';
-    await Promise.all([fetchStores(), fetchItems(), fetchExtras()]);
+    await Promise.all([fetchStores(), fetchItems(), fetchExtras(), fetchSavedMemo()]);
 
     // Realtime subscription
     sb.channel('shopping_items_changes')
@@ -2133,6 +2301,9 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'stores' }, () => {
         fetchStores();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'saved_memo' }, () => {
+        fetchSavedMemo();
       })
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') setSync('synced');
