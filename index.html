@@ -396,7 +396,49 @@
     border-style: dashed;
   }
   .store-chip.manage:active { background: var(--gold-soft); }
+  .store-chip.manage.active {
+    background: var(--gold);
+    color: #0b0908;
+    border-color: var(--gold);
+    border-style: solid;
+    font-weight: 500;
+  }
   .store-chip svg { width: 14px; height: 14px; }
+
+  /* 編集モード時の見た目 */
+  .edit-mode-banner {
+    display: none;
+    margin: 0 20px 16px;
+    padding: 10px 16px;
+    background: var(--gold-soft);
+    border: 1px solid var(--gold);
+    border-radius: 2px;
+    font-family: var(--jp-serif);
+    font-size: 12px;
+    color: var(--gold);
+    letter-spacing: 0.15em;
+    text-align: center;
+  }
+  body.editing .edit-mode-banner { display: block; }
+  body.editing .item {
+    cursor: pointer;
+    border-color: var(--gold-dim);
+  }
+  body.editing .item::after {
+    content: '✎';
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gold);
+    font-size: 16px;
+    opacity: 0.8;
+  }
+  body.editing .item .checkbox,
+  body.editing .item .qty-stepper {
+    pointer-events: none;
+    opacity: 0.35;
+  }
 
   /* ---------- Store Group ---------- */
   .store-group {
@@ -1306,6 +1348,7 @@
 </div>
 
 <div class="store-chips" id="storeChips"></div>
+<div class="edit-mode-banner" id="editModeBanner">編集モード中 — 編集したい商品をタップ</div>
 
 <div class="section-head">
   <div class="line"></div>
@@ -1448,9 +1491,10 @@
     items: [],
     extras: [],
     stores: [],
-    savedMemo: null,          // { id, text, created_at } or null
+    savedMemo: null,
     tab: 'all',
     selectedStoreId: 'all',   // 'all' | 'none' | <uuid>
+    editMode: false,          // 商品編集モード
     editingId: null,
     editingStoreId: null,
     tempPhoto: null,
@@ -1724,6 +1768,20 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     manage.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>店舗管理`;
     manage.addEventListener('click', openStoreModal);
     el.appendChild(manage);
+
+    const editBtn = document.createElement('button');
+    editBtn.className = 'store-chip manage' + (state.editMode ? ' active' : '');
+    editBtn.innerHTML = state.editMode
+      ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>完了`
+      : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>商品編集`;
+    editBtn.addEventListener('click', toggleEditMode);
+    el.appendChild(editBtn);
+  }
+
+  function toggleEditMode() {
+    state.editMode = !state.editMode;
+    document.body.classList.toggle('editing', state.editMode);
+    renderStoreChips();
   }
 
   function renderStoresList() {
@@ -1927,7 +1985,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
       <div class="checkbox">
         <svg viewBox="0 0 24 24" fill="none" stroke="#0b0908" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
       </div>
-      <div class="thumb" data-action="edit">
+      <div class="thumb">
         ${item.photo ? `<img src="${item.photo}" alt="" loading="lazy">` : `
           <div class="placeholder">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
@@ -1936,7 +1994,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
             </svg>
           </div>`}
       </div>
-      <div class="item-info" data-action="toggle">
+      <div class="item-info">
         <div class="item-name">${escapeHtml(item.name)}</div>
         ${item.meta ? `<div class="item-meta">${escapeHtml(item.meta)}</div>` : ''}
       </div>
@@ -1945,20 +2003,27 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
         <span class="qty-num">${qty}</span>
         <button class="qty-btn qty-plus" aria-label="増やす">＋</button>
       </div>
-      <button class="item-menu" data-action="edit" aria-label="編集">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-        </svg>
-      </button>
     `;
-    el.querySelector('[data-action="toggle"]').addEventListener('click', () => toggleItem(item.id));
-    el.querySelector('.checkbox').addEventListener('click', (e) => { e.stopPropagation(); toggleItem(item.id); });
-    el.querySelectorAll('[data-action="edit"]').forEach(b => {
-      b.addEventListener('click', (e) => { e.stopPropagation(); openEditModal(item.id); });
+    el.addEventListener('click', (e) => {
+      // qty-stepper や checkbox の個別ハンドラが先に動く
+      if (state.editMode) { openEditModal(item.id); return; }
+      toggleItem(item.id);
     });
-    el.querySelector('.qty-minus').addEventListener('click', (e) => { e.stopPropagation(); updateQty(item.id, qty - 1); });
-    el.querySelector('.qty-plus').addEventListener('click', (e) => { e.stopPropagation(); updateQty(item.id, qty + 1); });
+    el.querySelector('.checkbox').addEventListener('click', (e) => {
+      if (state.editMode) return;
+      e.stopPropagation();
+      toggleItem(item.id);
+    });
+    el.querySelector('.qty-minus').addEventListener('click', (e) => {
+      if (state.editMode) return;
+      e.stopPropagation();
+      updateQty(item.id, qty - 1);
+    });
+    el.querySelector('.qty-plus').addEventListener('click', (e) => {
+      if (state.editMode) return;
+      e.stopPropagation();
+      updateQty(item.id, qty + 1);
+    });
     return el;
   }
 
