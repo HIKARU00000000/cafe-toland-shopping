@@ -108,35 +108,6 @@
     box-shadow: 0 0 8px var(--gold);
   }
 
-  /* Sync status */
-  .sync-status {
-    position: fixed;
-    top: 16px;
-    right: 16px;
-    z-index: 30;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 10px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    font-family: var(--serif);
-    font-style: italic;
-    font-size: 10px;
-    letter-spacing: 0.15em;
-    color: var(--text-muted);
-    opacity: 0;
-    transition: opacity .3s;
-  }
-  .sync-status.show { opacity: 1; }
-  .sync-status .dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--success);
-    box-shadow: 0 0 6px var(--success);
-  }
-  .sync-status.offline .dot { background: var(--danger); box-shadow: 0 0 6px var(--danger); }
-  .sync-status.syncing .dot { background: var(--gold); box-shadow: 0 0 6px var(--gold); animation: pulse 1.2s infinite; }
   @keyframes pulse { 0%, 100% { opacity: 1 } 50% { opacity: 0.3 } }
 
   /* ---------- Tabs ---------- */
@@ -1334,8 +1305,6 @@
 </head>
 <body>
 
-<div class="sync-status" id="syncStatus"><span class="dot"></span><span id="syncLabel">SYNCED</span></div>
-
 <header>
   <div class="brand">Cafe Toland</div>
   <div class="wordmark">買い出しリスト</div>
@@ -1559,14 +1528,8 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
 
   // ---------- Sync status ----------
   const $ = (id) => document.getElementById(id);
-  function setSync(status) {
-    const el = $('syncStatus');
-    const label = $('syncLabel');
-    el.classList.remove('syncing', 'offline', 'show');
-    if (status === 'syncing') { el.classList.add('syncing', 'show'); label.textContent = 'SYNCING'; }
-    else if (status === 'synced') { el.classList.add('show'); label.textContent = 'SYNCED'; setTimeout(() => el.classList.remove('show'), 1800); }
-    else if (status === 'offline') { el.classList.add('offline', 'show'); label.textContent = 'OFFLINE'; }
-  }
+  // 同期ステータス表示は削除済み。関数は no-op として残し呼び出し側は変更なし。
+  function setSync(_status) {}
 
   // ---------- Data ----------
   async function fetchItems() {
