@@ -43,6 +43,11 @@
     letter-spacing: 0.02em;
     -webkit-font-smoothing: antialiased;
   }
+  /* 「すべて」表示時、店舗セクションごとにスナップスクロール */
+  html.snap-scroll {
+    scroll-snap-type: y proximity;
+    scroll-padding-top: 24px;
+  }
   body {
     min-height: 100vh;
     padding-bottom: 140px;
@@ -312,26 +317,41 @@
   .store-chip svg { width: 14px; height: 14px; }
 
   /* ---------- Store Group ---------- */
-  .store-group { margin-bottom: 24px; }
+  .store-group {
+    min-height: calc(100vh - 160px);
+    padding-top: 8px;
+    padding-bottom: 24px;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+  }
+  .store-group:last-child { min-height: 0; }
   .store-group-head {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 0 24px 14px;
+    padding: 12px 24px 18px;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: linear-gradient(to bottom, var(--bg) 70%, rgba(11, 9, 8, 0.9));
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
   }
-  .store-group-head .line { flex: 1; height: 1px; background: var(--hairline); }
+  .store-group-head .line { flex: 1; height: 1px; background: var(--gold-dim); opacity: 0.4; }
   .store-group-head .name {
     font-family: var(--jp-serif);
     font-weight: 500;
-    font-size: 14px;
+    font-size: 17px;
     color: var(--gold);
-    letter-spacing: 0.18em;
+    letter-spacing: 0.22em;
   }
   .store-group-head .count {
     font-family: var(--serif);
     font-style: italic;
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text-muted);
+    margin-left: 2px;
   }
 
   /* ---------- Item ---------- */
@@ -1443,14 +1463,15 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     const el = $('storeChips');
     if (!el) return;
     el.innerHTML = '';
+    const noneCount = state.items.filter(i => !i.store_id).length;
     const chips = [
       { id: 'all', name: 'すべて', count: state.items.length },
       ...state.stores.map(s => ({
         id: s.id, name: s.name,
         count: state.items.filter(i => i.store_id === s.id).length,
       })),
-      { id: 'none', name: '未分類', count: state.items.filter(i => !i.store_id).length },
     ];
+    if (noneCount > 0) chips.push({ id: 'none', name: '未分類', count: noneCount });
     chips.forEach(c => {
       const btn = document.createElement('button');
       btn.className = 'store-chip' + (state.selectedStoreId === c.id ? ' active' : '');
@@ -1759,6 +1780,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     }
 
     const grouped = state.selectedStoreId === 'all';
+    document.documentElement.classList.toggle('snap-scroll', grouped);
     if (grouped) {
       const buckets = new Map();
       state.stores.forEach(s => buckets.set(s.id, []));
