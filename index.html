@@ -321,6 +321,42 @@
     overflow-y: auto;
   }
 
+  .saved-memo-add {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--hairline);
+  }
+  .saved-memo-add input {
+    flex: 1;
+    padding: 10px 14px;
+    background: var(--bg-2);
+    border: 1px solid var(--border-strong);
+    border-radius: 2px;
+    color: var(--text);
+    font-family: var(--jp-serif);
+    font-size: 14px;
+    letter-spacing: 0.05em;
+  }
+  .saved-memo-add input::placeholder { color: var(--text-dim); font-weight: 300; }
+  .saved-memo-add input:focus { outline: none; border-color: var(--gold); }
+  .saved-memo-add .add-btn {
+    flex-shrink: 0;
+    width: 44px;
+    background: var(--gold-soft);
+    border: 1px solid var(--border-strong);
+    color: var(--gold);
+    border-radius: 2px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .2s;
+  }
+  .saved-memo-add .add-btn:active { background: var(--gold); color: #0b0908; }
+  .saved-memo-add .add-btn svg { width: 16px; height: 16px; }
+
   /* ---------- Store Chips ---------- */
   .store-chips {
     display: flex;
@@ -1341,6 +1377,12 @@
     </div>
   </div>
   <div class="saved-memo-text" id="savedMemoText">—</div>
+  <div class="saved-memo-add">
+    <input type="text" id="savedMemoAddInput" placeholder="追加の品物を入力して＋" autocomplete="off" />
+    <button class="add-btn" id="savedMemoAddBtn" aria-label="追加">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+  </div>
 </div>
 
 <div class="store-chips" id="storeChips"></div>
@@ -1668,6 +1710,31 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     const d = new Date(state.savedMemo.created_at);
     const dateStr = `${d.getFullYear()}.${pad2(d.getMonth()+1)}.${pad2(d.getDate())}  ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
     $('savedMemoTime').textContent = dateStr + ' 作成';
+  }
+
+  async function addToSavedMemo() {
+    if (!state.savedMemo) return;
+    const input = $('savedMemoAddInput');
+    const name = input.value.trim();
+    if (!name) return;
+    const addBtn = $('savedMemoAddBtn');
+    addBtn.disabled = true;
+    const current = state.savedMemo.text;
+    const marker = '── あとから追加 ──';
+    const newLine = `・${name}`;
+    let newText;
+    if (current.includes(marker)) {
+      newText = current + '\n' + newLine;
+    } else {
+      newText = current + '\n\n' + marker + '\n' + newLine;
+    }
+    setSync('syncing');
+    const { error } = await sb.from('saved_memo').update({ text: newText }).eq('id', state.savedMemo.id);
+    if (error) { setSync('offline'); toast('追加エラー'); addBtn.disabled = false; return; }
+    setSync('synced');
+    input.value = '';
+    addBtn.disabled = false;
+    await fetchSavedMemo();
   }
 
   async function copySavedMemo() {
@@ -2454,6 +2521,10 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     $('closeStoreModal').addEventListener('click', closeStoreModal);
     $('savedMemoCopy').addEventListener('click', copySavedMemo);
     $('savedMemoDelete').addEventListener('click', deleteSavedMemo);
+    $('savedMemoAddBtn').addEventListener('click', addToSavedMemo);
+    $('savedMemoAddInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); addToSavedMemo(); }
+    });
     [$('itemModal'), $('memoModal'), $('storeModal')].forEach(m => {
       m.addEventListener('click', (e) => {
         if (e.target === m) {
