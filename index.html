@@ -716,6 +716,33 @@
   }
   @keyframes spin { to { transform: rotate(360deg) } }
 
+  /* カテゴリー末尾の商品追加ボタン */
+  .add-item-btn {
+    margin: 10px 16px 4px;
+    padding: 14px 20px;
+    background: transparent;
+    border: 1px dashed var(--border-strong);
+    border-radius: 2px;
+    color: var(--gold);
+    font-family: var(--jp-serif);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: calc(100% - 32px);
+    transition: all .2s;
+  }
+  .add-item-btn:active {
+    background: var(--gold-soft);
+    border-color: var(--gold);
+    border-style: solid;
+  }
+  .add-item-btn svg { width: 14px; height: 14px; }
+
   /* ---------- Bottom Bar ---------- */
   .bottom-bar {
     position: fixed;
@@ -1353,9 +1380,6 @@
 <div id="itemList"></div>
 
 <div class="bottom-bar">
-  <button class="btn btn-icon" id="addBtn" aria-label="商品を追加">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-  </button>
   <button class="btn btn-primary" id="memoBtn" disabled><span>メモにまとめる</span></button>
 </div>
 
@@ -2042,38 +2066,26 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
 
     list.innerHTML = '';
 
-    if (items.length === 0) {
+    const grouped = state.selectedStoreId === 'all';
+
+    // 空状態: カテゴリーが1つもない & 商品も0件のときのみ全画面空表示
+    if (state.items.length === 0 && state.stores.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'empty';
-      if (state.items.length === 0) {
-        empty.innerHTML = `
-          <div class="empty-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-            </svg>
-          </div>
-          <div class="empty-title">リストは空です</div>
-          <div class="empty-ornament">◆ ◆ ◆</div>
-          <div class="empty-sub">下の「＋」から<br>買い出し商品を追加してください</div>
-        `;
-      } else {
-        empty.innerHTML = `
-          <div class="empty-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="20 6 9 17 4 12"/>
-            </svg>
-          </div>
-          <div class="empty-title">該当する商品はありません</div>
-          <div class="empty-ornament">◆ ◆ ◆</div>
-          <div class="empty-sub">カテゴリーを切り替えてみてください</div>
-        `;
-      }
+      empty.innerHTML = `
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+          </svg>
+        </div>
+        <div class="empty-title">リストは空です</div>
+        <div class="empty-ornament">◆ ◆ ◆</div>
+        <div class="empty-sub">まずは「カテゴリー追加」から<br>カテゴリーを作ってください</div>
+      `;
       list.appendChild(empty);
       return;
     }
-
-    const grouped = state.selectedStoreId === 'all';
     document.documentElement.classList.toggle('snap-scroll', grouped);
     if (grouped) {
       const buckets = new Map();
@@ -2086,20 +2098,31 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
       });
       state.stores.forEach(s => {
         const arr = buckets.get(s.id) || [];
-        if (arr.length === 0) return;
-        list.appendChild(renderStoreGroup(s.name, arr));
+        // 件数0でもセクション表示（追加ボタンを出すため）
+        list.appendChild(renderStoreGroup(s.name, arr, s.id));
       });
       const noneArr = buckets.get('__none__') || [];
-      if (noneArr.length > 0) list.appendChild(renderStoreGroup('未分類', noneArr));
+      if (noneArr.length > 0) list.appendChild(renderStoreGroup('未分類', noneArr, null));
     } else {
       const inner = document.createElement('div');
       inner.className = 'items';
       items.forEach(it => inner.appendChild(renderItemCard(it)));
       list.appendChild(inner);
+      const sid = (state.selectedStoreId === 'none' || state.selectedStoreId === 'all')
+        ? null : state.selectedStoreId;
+      list.appendChild(makeAddItemBtn(sid));
     }
   }
 
-  function renderStoreGroup(name, items) {
+  function makeAddItemBtn(storeId) {
+    const btn = document.createElement('button');
+    btn.className = 'add-item-btn';
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>商品を追加`;
+    btn.addEventListener('click', () => openAddModal(storeId));
+    return btn;
+  }
+
+  function renderStoreGroup(name, items, storeId) {
     const group = document.createElement('div');
     group.className = 'store-group';
     const head = document.createElement('div');
@@ -2115,6 +2138,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     items.forEach(it => inner.appendChild(renderItemCard(it)));
     group.appendChild(head);
     group.appendChild(inner);
+    group.appendChild(makeAddItemBtn(storeId));
     return group;
   }
 
@@ -2125,14 +2149,18 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
   }
 
   // ---------- Modal flow ----------
-  function openAddModal() {
+  function openAddModal(preStoreId) {
     state.editingId = null;
     state.tempPhoto = null;
     state.tempPhotoBlob = null;
     state.photoChanged = false;
-    // Pre-select store from current filter
-    state.editingStoreId = (state.selectedStoreId !== 'all' && state.selectedStoreId !== 'none')
-      ? state.selectedStoreId : null;
+    // Pre-select store: 明示引数 > 選択中カテゴリー
+    if (preStoreId !== undefined) {
+      state.editingStoreId = preStoreId;
+    } else {
+      state.editingStoreId = (state.selectedStoreId !== 'all' && state.selectedStoreId !== 'none')
+        ? state.selectedStoreId : null;
+    }
     $('itemModalEyebrow').textContent = 'New Item';
     $('itemModalTitle').textContent = '商品を追加';
     $('itemName').value = '';
@@ -2405,7 +2433,6 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // Events
-    $('addBtn').addEventListener('click', openAddModal);
     $('memoBtn').addEventListener('click', openMemo);
     $('cancelItem').addEventListener('click', closeItemModal);
     $('saveItem').addEventListener('click', saveItem);
