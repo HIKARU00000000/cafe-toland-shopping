@@ -1460,7 +1460,8 @@
     </div>
 
     <div class="modal-actions">
-      <button class="btn-cancel" id="closeMemo">閉じる</button>
+      <button class="btn-cancel" id="closeMemo">キャンセル</button>
+      <button class="btn-save" id="saveMemoBtn">保存する</button>
     </div>
   </div>
 </div>
@@ -2340,16 +2341,28 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     $('memoCount').textContent = `${pad2(total)} items`;
   }
 
-  async function openMemo() {
+  function openMemo() {
     const totalN = state.items.filter(i => i.checked).length + state.extras.length;
     if (totalN === 0) return;
     state.memoOpen = true;
     refreshMemoText();
     renderExtras();
     $('memoModal').classList.add('open');
-    // ホーム画面にも反映されるよう保存
+  }
+
+  async function saveMemo() {
+    const totalN = state.items.filter(i => i.checked).length + state.extras.length;
+    if (totalN === 0) { toast('商品が選択されていません'); return; }
+    const btn = $('saveMemoBtn');
+    btn.disabled = true;
+    btn.textContent = '保存中...';
     const { text } = buildMemoText();
-    await saveMemoToDb(text);
+    const ok = await saveMemoToDb(text);
+    if (!ok) {
+      btn.disabled = false;
+      btn.textContent = '保存する';
+      return;
+    }
     // 選択していた商品のチェックと個数をリセット
     const checkedItems = state.items.filter(i => i.checked);
     if (checkedItems.length > 0) {
@@ -2367,8 +2380,15 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
         });
         render();
         toast('リセットエラー');
+        btn.disabled = false;
+        btn.textContent = '保存する';
+        return;
       }
     }
+    toast('メモを保存しました');
+    btn.disabled = false;
+    btn.textContent = '保存する';
+    closeMemo();
   }
 
   function closeMemo() {
@@ -2423,6 +2443,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     $('saveItem').addEventListener('click', saveItem);
     $('deleteItem').addEventListener('click', deleteCurrent);
     $('closeMemo').addEventListener('click', closeMemo);
+    $('saveMemoBtn').addEventListener('click', saveMemo);
     $('copyMemo').addEventListener('click', copyMemo);
     $('itemPhotoInput').addEventListener('change', (e) => handlePhotoSelect(e.target.files[0]));
     $('extrasAddBtn').addEventListener('click', submitExtra);
