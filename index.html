@@ -590,11 +590,11 @@
   .qty-stepper {
     display: none;
     align-items: center;
-    gap: 2px;
+    gap: 4px;
     flex-shrink: 0;
     border: 1px solid var(--gold-dim);
     border-radius: 999px;
-    padding: 2px;
+    padding: 3px;
     background: var(--bg-2);
     animation: qtyFadeIn .2s ease-out;
   }
@@ -604,36 +604,41 @@
     to { opacity: 1; transform: scale(1); }
   }
   .qty-btn {
-    width: 26px;
-    height: 26px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
-    background: transparent;
-    border: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
     color: var(--gold);
-    font-family: var(--serif);
-    font-size: 16px;
-    font-weight: 500;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 22px;
+    font-weight: 400;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     line-height: 1;
     padding: 0;
-    transition: background .15s;
+    transition: all .15s;
   }
-  .qty-btn:active { background: var(--gold-soft); }
-  .qty-btn:disabled { color: var(--text-dim); cursor: not-allowed; }
-  .qty-btn:disabled:active { background: transparent; }
+  .qty-btn:active {
+    background: var(--gold);
+    color: #0b0908;
+    border-color: var(--gold);
+  }
+  .qty-btn:disabled { color: var(--text-dim); cursor: not-allowed; border-color: var(--hairline); }
+  .qty-btn:disabled:active { background: var(--surface); color: var(--text-dim); border-color: var(--hairline); }
   .qty-num {
-    min-width: 20px;
+    min-width: 32px;
     text-align: center;
     font-family: var(--serif);
     font-weight: 500;
-    font-size: 14px;
-    color: var(--text);
-    letter-spacing: 0.05em;
+    font-size: 20px;
+    color: var(--gold);
+    letter-spacing: 0.03em;
+    line-height: 1;
   }
-  .item.checked .qty-num { color: var(--text-muted); }
+  .item.checked .qty-num { color: var(--gold); }
 
   /* Qty in add/edit modal */
   .qty-modal {
