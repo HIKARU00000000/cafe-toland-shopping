@@ -544,6 +544,69 @@
   .item-menu:active { color: var(--gold); border-color: var(--border); }
   .item-menu svg { width: 16px; height: 16px; }
 
+  /* Qty Stepper (item card inline) */
+  .qty-stepper {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 2px;
+    background: var(--bg-2);
+  }
+  .qty-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    color: var(--gold);
+    font-family: var(--serif);
+    font-size: 16px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    transition: background .15s;
+  }
+  .qty-btn:active { background: var(--gold-soft); }
+  .qty-btn:disabled { color: var(--text-dim); cursor: not-allowed; }
+  .qty-btn:disabled:active { background: transparent; }
+  .qty-num {
+    min-width: 20px;
+    text-align: center;
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--text);
+    letter-spacing: 0.05em;
+  }
+  .item.checked .qty-num { color: var(--text-muted); }
+
+  /* Qty in add/edit modal */
+  .qty-modal {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px;
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    background: var(--surface);
+  }
+  .qty-modal .qty-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 20px;
+  }
+  .qty-modal .qty-num {
+    min-width: 34px;
+    font-size: 18px;
+  }
+
   /* ---------- Empty / Loading ---------- */
   .empty {
     margin: 20px 24px;
@@ -1504,6 +1567,20 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     setSync('synced');
   }
 
+  async function updateQty(id, newQty) {
+    const it = state.items.find(i => i.id === id);
+    if (!it) return;
+    const q = Math.max(1, Math.min(99, newQty | 0));
+    if (q === (it.qty || 1)) return;
+    const prev = it.qty || 1;
+    it.qty = q;
+    render();
+    setSync('syncing');
+    const { error } = await sb.from('shopping_items').update({ qty: q }).eq('id', id);
+    if (error) { it.qty = prev; render(); setSync('offline'); toast('同期エラー'); return; }
+    setSync('synced');
+  }
+
   // ---------- Saved Memo ----------
   async function fetchSavedMemo() {
     const { data, error } = await sb
@@ -1845,6 +1922,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
   function renderItemCard(item) {
     const el = document.createElement('div');
     el.className = 'item' + (item.checked ? ' checked' : '');
+    const qty = item.qty || 1;
     el.innerHTML = `
       <div class="checkbox">
         <svg viewBox="0 0 24 24" fill="none" stroke="#0b0908" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -1862,6 +1940,11 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
         <div class="item-name">${escapeHtml(item.name)}</div>
         ${item.meta ? `<div class="item-meta">${escapeHtml(item.meta)}</div>` : ''}
       </div>
+      <div class="qty-stepper" aria-label="個数">
+        <button class="qty-btn qty-minus" aria-label="減らす"${qty <= 1 ? ' disabled' : ''}>−</button>
+        <span class="qty-num">${qty}</span>
+        <button class="qty-btn qty-plus" aria-label="増やす">＋</button>
+      </div>
       <button class="item-menu" data-action="edit" aria-label="編集">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -1874,6 +1957,8 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     el.querySelectorAll('[data-action="edit"]').forEach(b => {
       b.addEventListener('click', (e) => { e.stopPropagation(); openEditModal(item.id); });
     });
+    el.querySelector('.qty-minus').addEventListener('click', (e) => { e.stopPropagation(); updateQty(item.id, qty - 1); });
+    el.querySelector('.qty-plus').addEventListener('click', (e) => { e.stopPropagation(); updateQty(item.id, qty + 1); });
     return el;
   }
 
@@ -2165,7 +2250,9 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
       body += `【${sec.name}】\n`;
       body += sec.items.map(it => {
         idx += 1;
-        return `${pad2(idx)}.  ${it.name}${it.meta ? '　（' + it.meta + '）' : ''}`;
+        const q = it.qty || 1;
+        const qtyPart = q > 1 ? ` × ${q}` : '';
+        return `${pad2(idx)}.  ${it.name}${qtyPart}${it.meta ? '　（' + it.meta + '）' : ''}`;
       }).join('\n');
     });
 
