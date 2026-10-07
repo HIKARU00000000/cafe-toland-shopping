@@ -1304,12 +1304,6 @@
   <div class="date-pill"><span class="dot"></span><span id="todayDate">—</span></div>
 </header>
 
-<div class="tabs">
-  <button class="tab active" data-tab="all">すべて<span class="count" id="tabAllCount">00</span></button>
-  <button class="tab" data-tab="unchecked">未チェック<span class="count" id="tabUncheckedCount">00</span></button>
-  <button class="tab" data-tab="checked">済<span class="count" id="tabCheckedCount">00</span></button>
-</div>
-
 <div class="hero">
   <div class="hero-label">Today's List</div>
   <div class="hero-title">本日の買い出し</div>
@@ -2034,30 +2028,17 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
 
     const total = state.items.length;
     const checkedN = state.items.filter(i => i.checked).length;
-    const uncheckedN = total - checkedN;
 
     $('totalCount').innerHTML = `${pad2(total)}<span class="suffix">items</span>`;
     $('checkedCount').innerHTML = `${pad2(checkedN)}<span class="suffix">done</span>`;
-    $('tabAllCount').textContent = pad2(total);
-    $('tabUncheckedCount').textContent = pad2(uncheckedN);
-    $('tabCheckedCount').textContent = pad2(checkedN);
 
     updateMemoButton();
 
-    document.querySelectorAll('.tab').forEach(t => {
-      t.classList.toggle('active', t.dataset.tab === state.tab);
-    });
-
     let items = state.items;
-    if (state.tab === 'unchecked') items = items.filter(i => !i.checked);
-    else if (state.tab === 'checked') items = items.filter(i => i.checked);
-
     if (state.selectedStoreId === 'none') items = items.filter(i => !i.store_id);
     else if (state.selectedStoreId !== 'all') items = items.filter(i => i.store_id === state.selectedStoreId);
 
-    $('sectionLabel').textContent =
-      state.tab === 'all' ? 'Items' :
-      state.tab === 'unchecked' ? 'To Buy' : 'Completed';
+    $('sectionLabel').textContent = 'Items';
 
     list.innerHTML = '';
 
@@ -2425,9 +2406,6 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     $('closeStoreModal').addEventListener('click', closeStoreModal);
     $('savedMemoCopy').addEventListener('click', copySavedMemo);
     $('savedMemoDelete').addEventListener('click', deleteSavedMemo);
-    document.querySelectorAll('.tab').forEach(t => {
-      t.addEventListener('click', () => { state.tab = t.dataset.tab; render(); });
-    });
     [$('itemModal'), $('memoModal'), $('storeModal')].forEach(m => {
       m.addEventListener('click', (e) => {
         if (e.target === m) {
