@@ -153,8 +153,8 @@
 
   /* ---------- Hero / Stats ---------- */
   .hero {
-    margin: 0 24px 36px;
-    padding: 32px 28px;
+    margin: 0 24px 20px;
+    padding: 26px 28px 22px;
     position: relative;
     background:
       linear-gradient(135deg, rgba(201, 169, 97, 0.06), rgba(201, 169, 97, 0.01));
@@ -186,13 +186,12 @@
     font-size: 26px;
     color: var(--text);
     letter-spacing: 0.08em;
-    margin-bottom: 20px;
+    margin-bottom: 14px;
   }
   .divider {
     width: 40px;
     height: 1px;
     background: var(--gold);
-    margin-bottom: 18px;
     opacity: 0.5;
   }
   .stats {
@@ -1342,21 +1341,10 @@
   <div class="date-pill"><span class="dot"></span><span id="todayDate">—</span></div>
 </header>
 
-<div class="hero">
+<div class="hero" id="hero" style="display:none">
   <div class="hero-label">Today's List</div>
   <div class="hero-title">本日の買い出し</div>
   <div class="divider"></div>
-  <div class="stats">
-    <div class="stat-group">
-      <div class="stat-num" id="totalCount">00<span class="suffix">items</span></div>
-      <div class="stat-label">合計</div>
-    </div>
-    <div class="stat-sep"></div>
-    <div class="stat-group">
-      <div class="stat-num" id="checkedCount">00<span class="suffix">done</span></div>
-      <div class="stat-label">チェック済</div>
-    </div>
-  </div>
 </div>
 
 <div class="saved-memo" id="savedMemo" style="display:none">
@@ -1704,8 +1692,14 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
 
   function renderSavedMemo() {
     const wrap = $('savedMemo');
-    if (!state.savedMemo) { wrap.style.display = 'none'; return; }
+    const hero = $('hero');
+    if (!state.savedMemo) {
+      wrap.style.display = 'none';
+      hero.style.display = 'none';
+      return;
+    }
     wrap.style.display = '';
+    hero.style.display = '';
     $('savedMemoText').textContent = state.savedMemo.text;
     const d = new Date(state.savedMemo.created_at);
     const dateStr = `${d.getFullYear()}.${pad2(d.getMonth()+1)}.${pad2(d.getDate())}  ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
@@ -2098,12 +2092,6 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     const now = new Date();
     const d = ['SUN','MON','TUE','WED','THU','FRI','SAT'][now.getDay()];
     $('todayDate').textContent = `${now.getFullYear()}.${pad2(now.getMonth()+1)}.${pad2(now.getDate())}  ${d}`;
-
-    const total = state.items.length;
-    const checkedN = state.items.filter(i => i.checked).length;
-
-    $('totalCount').innerHTML = `${pad2(total)}<span class="suffix">items</span>`;
-    $('checkedCount').innerHTML = `${pad2(checkedN)}<span class="suffix">done</span>`;
 
     updateMemoButton();
 
