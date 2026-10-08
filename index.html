@@ -240,8 +240,8 @@
 
   /* ---------- Saved Memo (ホーム画面に残るメモ) ---------- */
   .saved-memo {
-    margin: 0 24px 32px;
-    padding: 24px 20px 20px;
+    margin: 0 16px 28px;
+    padding: 22px 16px 18px;
     background: var(--surface);
     border: 1px solid var(--border-strong);
     border-radius: 2px;
@@ -261,6 +261,8 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
     margin-bottom: 14px;
   }
   .saved-memo-head-left {
@@ -284,21 +286,22 @@
   }
   .saved-memo-actions { display: flex; gap: 8px; }
   .saved-memo-btn {
-    padding: 7px 12px;
+    padding: 6px 10px;
     background: transparent;
     border: 1px solid var(--border-strong);
     border-radius: 2px;
     color: var(--text-muted);
     font-family: var(--jp-serif);
     font-size: 10px;
-    letter-spacing: 0.2em;
+    letter-spacing: 0.15em;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     transition: all .2s;
+    white-space: nowrap;
   }
-  .saved-memo-btn svg { width: 12px; height: 12px; }
+  .saved-memo-btn svg { width: 11px; height: 11px; }
   .saved-memo-btn.copy:active, .saved-memo-btn.copy.copied {
     background: var(--gold);
     color: #0b0908;
@@ -342,7 +345,7 @@
   .saved-memo-add input:focus { outline: none; border-color: var(--gold); }
   .saved-memo-add .add-btn {
     flex-shrink: 0;
-    width: 44px;
+    width: 42px;
     background: var(--gold-soft);
     border: 1px solid var(--border-strong);
     color: var(--gold);
@@ -352,6 +355,7 @@
     align-items: center;
     justify-content: center;
     transition: all .2s;
+    min-width: 42px;
   }
   .saved-memo-add .add-btn:active { background: var(--gold); color: #0b0908; }
   .saved-memo-add .add-btn svg { width: 16px; height: 16px; }
@@ -1366,7 +1370,7 @@
   </div>
   <div class="saved-memo-text" id="savedMemoText">—</div>
   <div class="saved-memo-add">
-    <input type="text" id="savedMemoAddInput" placeholder="追加の品物を入力して＋" autocomplete="off" />
+    <input type="text" id="savedMemoAddInput" placeholder="追加の品物" autocomplete="off" />
     <button class="add-btn" id="savedMemoAddBtn" aria-label="追加">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
     </button>
@@ -1702,7 +1706,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGci...';</code>
     hero.style.display = '';
     $('savedMemoText').textContent = state.savedMemo.text;
     const d = new Date(state.savedMemo.created_at);
-    const dateStr = `${d.getFullYear()}.${pad2(d.getMonth()+1)}.${pad2(d.getDate())}  ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+    const dateStr = `${d.getMonth()+1}/${d.getDate()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
     $('savedMemoTime').textContent = dateStr + ' 作成';
   }
 
